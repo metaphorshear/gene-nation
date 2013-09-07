@@ -81,6 +81,10 @@ class Stock(object):
             return
         if self.csv is None:
             self.csv = []
+        try:
+            os.mkdir("csvs")
+        except OSError:
+            pass
         def readin(url, source, dest):
             if source == 'disk':
                 #print "Loading copy of", self.symbol, choice, "from disk"

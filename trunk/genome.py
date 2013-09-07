@@ -286,9 +286,12 @@ class LinkedGenome(Genome):
         #will need to be updated if siblings are introduced
         if self.parents == []: return False
         for parent in self.parents:
-            for grandparent in parent.parents:
-                if self.is_child(grandparent):
-                    return True
+            try:
+                for grandparent in parent.parents:
+                    if self.is_child(grandparent):
+                        return True
+            except AttributeError:
+                return False
             ret = is_abomination(parent)
         return ret
     #def incesticide(self, mercy=None):
