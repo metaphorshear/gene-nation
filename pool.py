@@ -37,10 +37,13 @@ class Pool(object):
         saved_state is a flag indicating whether this has been loaded from a saved state, and
         is set by load_state
         """
-        tmp = os.listdir('csvs')
-        for i in range(len(tmp)):
-            tmp[i] = re.findall(r'[A-Z]+', tmp[i])[0]
-        self.symbols = list(set(tmp))
+        try:
+            tmp = os.listdir('csvs')
+            for i in range(len(tmp)):
+                tmp[i] = re.findall(r'[A-Z]+', tmp[i])[0]
+                self.symbols = list(set(tmp))
+        except OSError:
+            pass
         self.ssize -= len(self.symbols)
         self.saved_state = False
 
