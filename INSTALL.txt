@@ -1,0 +1,10 @@
+If you have Python and Linux, you should have everything you need. If the supplied versions of requests and yappi don't work, you can install these with pip (pip install <egg>). Note that this code was written with Python 2.7. It hasn't been migrated to Python 3, but that should be mostly easy with the 2to3 tool.
+
+If you want to go to that much trouble, then you should also find all except blocks that use StandardError, and add a statement before them like this:
+
+except KeyboardInterrupt:
+	raise
+
+This is because StandardError was removed for Python 3, and the above is necessary so that keyboard interrupts still work properly.
+
+This hasn't been tested on Windows, and it's possible that a few minor things would need to be tweaked, but overall there are no major differences.
