@@ -60,7 +60,7 @@ class Pool(object):
         nas.close()
         #other.close()
         while len(self.symbols) < self.ssize:
-            sym = self.exc.pop(random.randrange(0, len(self.exc)))
+            sym = self.exc.pop(random.randrange(0, len(self.exc)).split('|')[0]
             try:
                 con = httplib.HTTPConnection("finance.yahoo.com")
                 con.request("HEAD", "/q/hp?s="+sym)
@@ -71,7 +71,6 @@ class Pool(object):
                 self.ssize -= 1
         while len(self.symbols) > 0:
             t = self.symbols.pop()
-            t = t.split('|')[0]
             self.stocks.append(Stock('XNAS', t))
         return self.stocks
 
