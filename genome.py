@@ -178,6 +178,12 @@ class Genome(object):
                 self.bids()
     def update(self):
         self.cond_order()
+        if len(self.portfolio) == 0:
+            return True
+        for p in self.portfolio.values():
+            if self.money > p.stock.commission:
+                self.cond_order(p.stock, p.total, p.number, 'trailing_sell', .15)
+                self.money -= p.stock.commission
         worth = self.money
         print "GAIN/LOSS -------------------"
         for key in self.portfolio:
@@ -265,6 +271,7 @@ class Genome(object):
             try:
                 p = self.portfolio[it.next()]
                 self.cond_order(p.stock, p.total, p.number, 'trailing_sell', .15)
+                self.money -= p.stock.commission
             except StopIteration:
                 break
         return self.portfolio
