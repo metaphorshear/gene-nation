@@ -60,7 +60,7 @@ class Pool(object):
         nas.close()
         #other.close()
         while len(self.symbols) < self.ssize:
-            sym = self.exc.pop(random.randrange(0, len(self.exc)).split('|')[0]
+            sym = self.exc.pop(random.randrange(0, len(self.exc))).split('|')[0]
             try:
                 con = httplib.HTTPConnection("finance.yahoo.com")
                 con.request("HEAD", "/q/hp?s="+sym)
@@ -186,6 +186,30 @@ class Pool(object):
             if child.name in n:
                 child.name = self.names.pop(0)
         print g1.name, "and", g2.name, "begat", child.name
+        n = 2
+        name = child.name + 'II'
+        def romnum(n):
+            roman = { 1 : 'I', 5: 'V', 10: 'X', 50: 'L' }
+            if n in roman:
+                return roman[n]
+            if n < 5:
+                if n == 4:
+                    return 'IV'
+                else:
+                    return 'I' + romnum(n-1)
+            elif n < 10:
+                if n == 9: return 'IX'
+                else:
+                    return 'V' + romnum(n-5)
+            elif n < 50:
+                if n == 49: return 'IL'
+                elif n == 40: return 'XL'
+                else:
+                    return 'X' + romnum(n-10)
+        while name in self.names:
+            n += 1
+            name = child.name + romnum(n)
+        self.names.append(name)
         child.build_keys(g1.keys)
         tmi = g1.weights.keys() + g2.weights.keys()
         for key in tmi:
@@ -230,11 +254,29 @@ class Pool(object):
     def run_pool(self, iterations=1, samespan=True, newspan=None, incest=True, mutation=False, mercy=None):
         """
         Step through each day in the time span, and assess the worth of genomes quarterly.
-        If samespan is False, then a newspan must be given of the form [start_date, end_date]
-        with both dates as tuples of (month-1, day, year)
+        If samespan is False, then a newspan must be given either of the form [start_date, end_date]
+        with both dates as tuples of (month-1, day, year), or as a generator/iterator over such values
         """
         print "Running through the past to predict the future..."
         def cull(self):
+            if len(self.genomes) <= (self.psize/2): #Don't cull; instead, generate some fresh genomes. 
+                while len(self.genomes) < (self.psize/2):
+                    g = Genome()
+                    g.name = self.names.pop(0)
+                    print g.name
+                    for s in self.stocks:
+                        g.build_keys(s.vals)
+                    print "Randomizing keys..."
+                    ret = False
+                    while ret == False:
+                        ret = g.randomize()
+                    print "Choosing stocks"
+                    g.choose(self.stocks)
+                    print "Buying stocks"
+                    g.bids()
+                    self.genomes.append(g)
+                gc.collect()
+                return
             s = sorted(self.genomes, key=lambda x: x.worth, reverse=True)
             print "Culling ", s[-1].name
             self.genomes.remove(s[-1])
@@ -247,11 +289,15 @@ class Pool(object):
                     else: gene.weights[k] -= 1
                 print gene.name
                 gene.choose(self.stocks)
+                gene.bids()
             kid = None
             k = combinations(range(len(s)), 2)
             while kid == None:
-                i, j = k.next()
-                kid = self.breed(s[i], s[j], mutation, incest, mercy)
+				try:
+					i, j = k.next()
+					kid = self.breed(s[i], s[j], mutation, incest, mercy)
+				except StopIteration:
+					break
         try:
             for i in range(iterations):
                 while self.cur_date != self.end_date:
@@ -266,7 +312,12 @@ class Pool(object):
                 if samespan==True:
                     pass
                 else:
-                    try: self.start_date, self.end_date = newspan
+                    try:
+                        if type(newspan) == list:
+                            self.start_date, self.end_date = newspan
+                        else:
+                            assert(type(newspan) == type( (i for i in range(1)) ))
+                            self.start_date, self.end_date = newspan.next()
                     except: pass
                 self.cur_date = self.start_date
                 for gene in self.genomes:
@@ -275,7 +326,7 @@ class Pool(object):
                         gene.money += (gene.portfolio[s].stock.high * gene.portfolio[s].number)
                     gene.portfolio = {}
                 cull(self)
-                for gene in self.genomes: self.money = 1000
+                #for gene in self.genomes: self.money = 1000
         except KeyboardInterrupt:
             self.save_state()
             exit()
